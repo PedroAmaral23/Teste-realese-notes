@@ -1,0 +1,29 @@
+name: Release Notes no Slack
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Pegar últimos commits
+        id: commits
+        run: |
+          echo "COMMITS<<EOF" >> $GITHUB_OUTPUT
+          git log -5 --pretty=format:"• %s (%an)" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Enviar mensagem para Slack
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{
+            \"text\": \"🚀 *Novo deploy realizado!*\n\n📦 *Repositório:* ${{ github.repository }}\n🌿 *Branch:* ${{ github.ref_name }}\n\n📝 *Commits:*\n${{ steps.commits.outputs.COMMITS }}\n\n👤 *Autor:* ${{ github.actor }}\"
+          }" \
+          ${{ secrets.SLACK_WEBHOOK_URL }}
